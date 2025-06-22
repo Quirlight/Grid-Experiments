@@ -17,12 +17,27 @@ struct FCircle
 	void DebugDraw(const UWorld* InWorld) const;
 #endif
 
+	void CreateEquidistantPoints(int NumOfPoints);
+
 protected:
 	UPROPERTY(BlueprintReadOnly)
 	FVector Center = FVector::ZeroVector;
 
 	UPROPERTY(BlueprintReadOnly)
 	float Radius = 1.f;
+
+	UPROPERTY(BlueprintReadOnly)
+	TArray<FVector> CellCorners;
+};
+
+USTRUCT()
+struct FCell
+{
+	GENERATED_BODY()
+
+protected:
+	UPROPERTY()
+	TArray<FVector> Corners;
 };
 
 UCLASS()
@@ -35,14 +50,47 @@ public:
 
 	virtual void BeginPlay() override;
 
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (UIMin = 1, UIMax = 50))
-	float NumberOfCircles = 10;
+	UFUNCTION(BlueprintCallable)
+	void FitToMesh();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (UIMin = 1))
-	float MaxHeight = 500.f;
+protected:
+	/**
+	 * Defines the radius the outermost circle(s) will have.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Radius = 1.f;
+
+	/**
+	 * Number of circles that will be created,
+	 * with the largest having a radius of @ref Radius.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (UIMin = 1, UIMax = 50))
+	int NumberOfCirclesOnPlane = 10;
+
+	/**
+	 * Number of circles that will be created at the side of the cylinder,
+	 * between the both outermost circles of the top and bottom plane.
+	 * This will only have an effect of the @ref Height isn't zero!
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int NumberOfCirclesOnSide = 1.f;
+
+	/**
+	 * Defines the height of the cylinder.
+	 * If it's zero the grid will only be a plane.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (UIMin = 0.f))
+	float Height = 0.f;
+
+	/**
+	 * Number of Cells every donut of the grid will have.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int NumOfCells = 8;
 
 private:
 	UPROPERTY(VisibleAnywhere)
 	TArray<FCircle> Circles;
+
+	void CreateCirclesOnCylinder();
 };
