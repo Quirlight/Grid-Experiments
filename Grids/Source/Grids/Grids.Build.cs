@@ -8,7 +8,20 @@ public class Grids : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
+		PublicDependencyModuleNames.AddRange(new string[]
+		{
+			"Core", 
+			"CoreUObject", 
+			"Engine", 
+			"InputCore", 
+			"EnhancedInput",
+			
+			// geometry manipulation
+			"GeometryCore",
+			"GeometryScriptingCore",
+			"GeometryFramework",
+			"PhysicsUtilities",
+		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

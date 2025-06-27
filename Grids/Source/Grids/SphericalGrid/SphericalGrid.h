@@ -5,6 +5,8 @@
 #include "GameFramework/Actor.h"
 #include "SphericalGrid.generated.h"
 
+class UDynamicMesh;
+
 USTRUCT(Blueprintable)
 struct FCircle
 {
@@ -19,16 +21,17 @@ struct FCircle
 
 	void CreateEquidistantPoints(int NumOfPoints);
 
+	UPROPERTY(BlueprintReadOnly)
+	TArray<FVector> CellCorners;
+
 protected:
 	UPROPERTY(BlueprintReadOnly)
 	FVector Center = FVector::ZeroVector;
 
 	UPROPERTY(BlueprintReadOnly)
 	float Radius = 1.f;
-
-	UPROPERTY(BlueprintReadOnly)
-	TArray<FVector> CellCorners;
 };
+
 
 USTRUCT()
 struct FCell
@@ -39,6 +42,7 @@ protected:
 	UPROPERTY()
 	TArray<FVector> Corners;
 };
+
 
 UCLASS()
 class GRIDS_API ASphericalGrid : public AActor
@@ -88,9 +92,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int NumOfCells = 8;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UDynamicMesh* Mesh;
+
 private:
 	UPROPERTY(VisibleAnywhere)
 	TArray<FCircle> Circles;
 
 	void CreateCirclesOnCylinder();
+
+	void FitPointToMesh(FVector& Point);
 };

@@ -1,6 +1,30 @@
 
 #include "SphericalGrid.h"
 
+#include "UDynamicMesh.h"
+#include "DynamicMesh/DynamicMesh3.h"
+#include "GeometryScript/MeshSpatialFunctions.h"
+
+namespace my_namespace
+{
+	void CreateDynamicMesh(const TArray<FVector3f>& InVertices, const TArray<uint32>& InIndices, UE::Geometry::FDynamicMesh3& OutMesh)
+	{
+		OutMesh.Clear();
+		for (const FVector3f& Vertex : InVertices)
+		{
+			OutMesh.AppendVertex(FVector3d(Vertex));
+		}
+
+		check(InIndices.Num() % 3 == 0);
+		const int32 NumTriangles = InIndices.Num() / 3;
+		for (int32 TriangleID = 0; TriangleID < NumTriangles; ++TriangleID)
+		{
+			const UE::Geometry::FIndex3i Triangle(InIndices[3 * TriangleID], InIndices[3 * TriangleID + 1], InIndices[3 * TriangleID + 2]);
+			OutMesh.AppendTriangle(Triangle);
+		}
+	}
+}
+
 #if WITH_EDITOR
 void FCircle::DebugDraw(const UWorld* InWorld) const
 {
@@ -92,6 +116,37 @@ void ASphericalGrid::BeginPlay()
 
 void ASphericalGrid::FitToMesh()
 {
-	//TODO
+	for (FCircle& Circle : Circles)
+	{
+		for (FVector& Point : Circle.CellCorners)
+		{
+			FitPointToMesh(Point);
+		}
+	}
 }
+
+void ASphericalGrid::FitPointToMesh(FVector& Point)
+{
+	UE::Geometry::FDynamicMesh3 DynamicMesh;
+	TArray<FVector3f> Vertices;
+	TArray<uint32> Indices;
+	my_namespace::CreateDynamicMesh(Vertices, Indices, DynamicMesh);
+
+	TObjectPtr<UDynamicMesh> TargetMesh = NewObject<UDynamicMesh>();
+	TargetMesh->SetMesh(DynamicMesh);
+
+	FGeometryScriptDynamicMeshBVH Bvh;
+	UGeometryScriptLibrary_MeshSpatial::BuildBVHForMesh(TargetMesh, Bvh);
+
+	FGeometryScriptSpatialQueryOptions Options;
+	Options.MaxDistance = 1000.f;
+
+	FGeometryScriptTrianglePoint NearestResult;
+	EGeometryScriptSearchOutcomePins Result;
+	UGeometryScriptLibrary_MeshSpatial::FindNearestPointOnMesh(
+		TargetMesh, Bvh, Point, Options, NearestResult, Result);
+
+	Point = NearestResult.Position;
+}
+
 
